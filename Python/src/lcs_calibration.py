@@ -13,7 +13,6 @@ class UI:
         print(f"START: {title}")
         self.root = ctk.CTk()
         self.root.title(title)
-        self.root.geometry("500x300")
         self.callback_function = callback_function
         self._arduino = arduino
 
@@ -38,6 +37,7 @@ class UI:
         self.lowest = 0
 
         self.root.title(title)
+        self.root.resizable(False, False)
         self.font_title = ('Arial', 16)
         self.font_text = ('Arial', 12)
         self.font_button = ('Arial', 14)
