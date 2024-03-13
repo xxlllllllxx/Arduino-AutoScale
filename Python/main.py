@@ -11,6 +11,7 @@ from collections import deque
 import customtkinter as ctk
 import src.lcs_graph as monitor
 import src.lcs_calibration as calibrate
+# ARDUINO or MOCK
 import src.lcs_serial_mock as serial
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -22,6 +23,9 @@ matplotlib.use("TkAgg")
 ctk.set_appearance_mode("dark")
 plt.style.use("dark_background")
 title = "Arduino Project"
+
+
+# NOTE: Configure this port and baudrate
 port = "" # check in arduino
 baudrate = "" # check in arduino
 
@@ -71,6 +75,8 @@ class App:
         self.tx_cal = ctk.StringVar(value="[ 0.00000 ] kg")
         self.calibration_result = 1
         self.accuracy = ctk.IntVar(value=5)
+        self.neg_a = ctk.StringVar(value=f"Negative Calibration  = [ {self._arduino.negative_calibration} ]")
+        self.pre_a = ctk.StringVar(value=f"Precision Calibration = [ {self._arduino.precision_adjustment} ]")
 
         # UI
         self.root.title(title)
@@ -91,10 +97,14 @@ class App:
         ctk.CTkLabel(cal_fm_sel_unit, text="SETTINGS").grid(padx=self.pad, pady=self.pad, sticky="NW")
         ctk.CTkLabel(cal_fm_sel_unit, text="Enter calibration accuracy     :").grid(padx=self.pad, pady=[0, self.pad], sticky="SEW")
         ctk.CTkEntry(cal_fm_sel_unit, textvariable=self.accuracy).grid(padx=self.pad, pady=[0, self.pad], sticky="NEW")
+        ctk.CTkLabel(cal_fm_sel_unit, textvariable=self.neg_a, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew")
+        ctk.CTkLabel(cal_fm_sel_unit, textvariable=self.pre_a, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew")
         
-        ctk.CTkLabel(cal_fm, text=self.tx_cal.get(), font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew", row=1, column=4)
+        ctk.CTkLabel(cal_fm, textvariable=self.tx_cal, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew", row=1, column=4)
         ctk.CTkButton(cal_fm, text="CALIBRATE", font=self.font_button, command=self._calibrationUI).grid(
             padx=self.pad, pady=self.pad, sticky="sew", row=2, column=4)
+
+        
 
         self.cal_cvs = FigureCanvasTkAgg(self.cal_fig, cal_fm_graph)
         self.cal_cvs.get_tk_widget().grid(sticky=ctk.NSEW)
@@ -137,9 +147,11 @@ class App:
     def _calibrationCallback1(self, data):
         print(data)
         if type(data) is float:
-            self.calibration_result = data
-            self._arduino.no_weight = self.calibration_result
+            self._arduino.negative_calibration = data
+
+            self.neg_a.set(value=f"Negative Calibration  = [ {self._arduino.negative_calibration} ]")
             calibrate.UI("Calibrate with weight", self._arduino, self._calibrationCallback2,accuracy=self.accuracy.get(), has_weight=True).start()
+
         elif type(data) is str:
             self._is_paused = False
         else:
@@ -147,14 +159,11 @@ class App:
             print("ERROR: Cal1")
 
     def _calibrationCallback2(self, data):
-        if data != 0:
+        if type(data) is float:
             self.calibration_result = data
+            self._arduino.precision_adjustment = data
             self.tx_cal.set(value=f"[  {self.calibration_result:.2f}  ] kg")
-
-            self._arduino.weighted[self.selected_calibration] = self.calibration_result
-
-            self._arduino.selected_unit = self.selected_calibration
-
+            self.pre_a.set(value=f"Precision Calibration  = [ {self._arduino.precision_adjustment} ]")
         self._is_paused = False
 
     def _monitorUI(self) -> bool:
@@ -203,7 +212,6 @@ class App:
 
 
 if __name__ == "__main__":
-    # NOTE: Configure this port and baudrate
     arduino = serial.Arduino(port, baudrate, interval=100, negative_cal=94, precision_adj=90)
     app = App(arduino)
 
