@@ -36,3 +36,11 @@
 - Add the weight and input the known weight of the object in the popup using kilograms. Click "start".
 - Wait for the list to stabilize, then click "ok".
 - Verify if the measurements are correct by observing the graphs.
+
+## Other Images
+###Calibration
+![Calibration without weight UI](/src/image3.png)
+![Calibration with weight UI](/src/image4.png)
+
+### Graphs
+![Graphs UI](/src/image5.png)
