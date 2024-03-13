@@ -68,8 +68,9 @@ class App:
         # CALIBRATION
         self.selected_calibration: int = 1
         self.unit: str = "kg"
-        self.tx_cal = ctk.StringVar(value="[ 0000.00 ] kg")
+        self.tx_cal = ctk.StringVar(value="[ 0.00000 ] kg")
         self.calibration_result = 1
+        self.accuracy = ctk.IntVar(value=5)
 
         # UI
         self.root.title(title)
@@ -79,37 +80,6 @@ class App:
         self.font_button = ('Arial', 14)
         self.pad = 10
 
-    def _calibrationUI(self) -> bool:
-        self._is_paused = True
-        # TEST NO WEIGHT
-        calibrate.UI("Calibrate without weight", self._arduino, self._calibrationCallback1).start()
-
-    def _calibrationCallback1(self, data):
-        if data is int or float:
-            self.calibration_result = data
-            self._arduino.no_weight = self.calibration_result
-            calibrate.UI("Calibrate with weight", self._arduino, self._calibrationCallback2).start()
-        elif data is str:
-            self._is_paused = False
-        else:
-            self._is_paused = False
-            print("ERROR: CAL1")
-            print(data)
-
-    def _calibrationCallback2(self, data):
-        if data != 0:
-            self.calibration_result = data
-            self.tx_cal.set(value=f"[  {self.calibration_result:.2f}  ] kg")
-
-            self._arduino.weighted[self.selected_calibration] = self.calibration_result
-
-            self._arduino.selected_unit = self.selected_calibration
-
-        self._is_paused = False
-
-    def _monitorUI(self) -> bool:
-        result = monitor.UI()
-
     def start(self):
         cal_fm = ctk.CTkFrame(self.root)
         cal_fm.grid(padx=self.pad + 10, pady=self.pad, sticky="new")
@@ -118,6 +88,10 @@ class App:
         cal_fm_graph.grid(padx=self.pad, pady=self.pad, sticky="nsew", row=1, column=0, columnspan=3, rowspan=2)
         cal_fm_sel_unit = ctk.CTkFrame(cal_fm)
         cal_fm_sel_unit.grid(padx=self.pad, pady=self.pad, sticky="nsew", row=1, column=3, rowspan=2)
+        ctk.CTkLabel(cal_fm_sel_unit, text="SETTINGS").grid(padx=self.pad, pady=self.pad, sticky="NW")
+        ctk.CTkLabel(cal_fm_sel_unit, text="Enter calibration accuracy     :").grid(padx=self.pad, pady=[0, self.pad], sticky="SEW")
+        ctk.CTkEntry(cal_fm_sel_unit, textvariable=self.accuracy).grid(padx=self.pad, pady=[0, self.pad], sticky="NEW")
+        
         ctk.CTkLabel(cal_fm, text=self.tx_cal.get(), font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew", row=1, column=4)
         ctk.CTkButton(cal_fm, text="CALIBRATE", font=self.font_button, command=self._calibrationUI).grid(
             padx=self.pad, pady=self.pad, sticky="sew", row=2, column=4)
@@ -154,6 +128,37 @@ class App:
         plt.show()
 
         self.root.mainloop()
+
+    def _calibrationUI(self) -> bool:
+        self._is_paused = True
+        # TEST NO WEIGHT
+        calibrate.UI("Calibrate without weight", self._arduino, self._calibrationCallback1, accuracy=self.accuracy.get()).start()
+
+    def _calibrationCallback1(self, data):
+        print(data)
+        if type(data) is float:
+            self.calibration_result = data
+            self._arduino.no_weight = self.calibration_result
+            calibrate.UI("Calibrate with weight", self._arduino, self._calibrationCallback2,accuracy=self.accuracy.get(), has_weight=True).start()
+        elif type(data) is str:
+            self._is_paused = False
+        else:
+            self._is_paused = False
+            print("ERROR: Cal1")
+
+    def _calibrationCallback2(self, data):
+        if data != 0:
+            self.calibration_result = data
+            self.tx_cal.set(value=f"[  {self.calibration_result:.2f}  ] kg")
+
+            self._arduino.weighted[self.selected_calibration] = self.calibration_result
+
+            self._arduino.selected_unit = self.selected_calibration
+
+        self._is_paused = False
+
+    def _monitorUI(self) -> bool:
+        result = monitor.UI()
 
     def updateCal(self, frame):
         if not self._is_paused:
