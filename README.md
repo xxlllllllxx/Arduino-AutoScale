@@ -38,7 +38,8 @@
 - Verify if the measurements are correct by observing the graphs.
 
 ## Other Images
-###Calibration
+
+### Calibration
 ![Calibration without weight UI](/src/image3.png)
 ![Calibration with weight UI](/src/image4.png)
 
