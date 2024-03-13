@@ -17,7 +17,7 @@
 2. Open the project in VS Code.
 3. Navigate to `/Arduino/main.ino` and open [main.ino](https://github.com/xxlllllllxx/Arduino-Project/blob/main/Adruino/main.ino).
 4. Connect the Arduino board, Hx711, and Load cell sensor with the provided configuration.
-   - Arduino Schema: [/src/image1.png](/src/image1.png)
+![Arduino Schema](/src/image1.png)
 5. Connect the Arduino board to the PC using a USB connector.
 6. Identify the port of the Arduino.
 7. Go to `/Python/main.py` and open [main.py](https://github.com/xxlllllllxx/Arduino-Project/blob/main/Python/main.py).
@@ -25,7 +25,8 @@
 9. Upload and run [main.ino](https://github.com/xxlllllllxx/Arduino-Project/blob/main/Adruino/main.ino).
 10. Run [main.py](https://github.com/xxlllllllxx/Arduino-Project/blob/main/Python/main.py).
 11. Observe the graphs.
-   - Python UI: [/src/image2.png](/src/image2.png)
+
+![Python UI](/src/image2.png)
 
 ## Configurations:
 - In settings, adjust the accuracy for calibrating the graphs output.
