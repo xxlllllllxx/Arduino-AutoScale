@@ -12,7 +12,7 @@ import customtkinter as ctk
 import src.lcs_graph as monitor
 import src.lcs_calibration as calibrate
 # ARDUINO or MOCK
-import src.lcs_serial_mock as serial
+import src.lcs_serial as serial
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib
