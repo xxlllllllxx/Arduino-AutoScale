@@ -6,6 +6,13 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib.patches import Arc
 from matplotlib.animation import FuncAnimation
+import matplotlib
+import matplotlib.pyplot as plt
+
+
+matplotlib.use("TkAgg")
+ctk.set_appearance_mode("dark")
+plt.style.use("dark_background")
 
 
 class UI:
@@ -31,7 +38,7 @@ class UI:
 
         self.is_stable = False
         self.is_cancelled = False
-        self.list_of_res = []
+        self.started = False
 
         self.highest = 1
         self.lowest = 0
@@ -58,11 +65,14 @@ class UI:
         ctk.CTkLabel(mon_fm_gaud, textvariable=self.tx_gaud, font=self.font_button).grid(sticky="NEW")
         ctk.CTkLabel(self.root, textvariable=self.tx_list, font=self.font_button).grid(sticky="SEW", row=0, column=3)
 
-        self.anim3 = FuncAnimation(self.gauge_fig, lambda frame: self.updateGauge(frame), frames=range(100), interval=100)
 
         ctk.CTkButton(self.root, text="Cancel", command=self.cancel_callback).grid(padx=self.pad, pady=self.pad, row=1, column=2)
-        ctk.CTkButton(self.root, text="START", command=self.start).grid(padx=self.pad, pady=self.pad, row=1, column=3)
-
+        self.btn_ok = ctk.CTkButton(self.root, text="START", command=self.ok_callback)
+        self.btn_ok.grid(padx=self.pad, pady=self.pad, row=1, column=3)
+        
+        
+        self.anim3 = FuncAnimation(self.gauge_fig, lambda frame: self.updateGauge(frame), frames=range(100), interval=100)
+        plt.show()
         self.root.mainloop()
 
     def cancel_callback(self):
@@ -70,30 +80,49 @@ class UI:
         self.is_stable = True
         try:
             if self.root.winfo_exists():
-                self.root.after(0, self.callback_function, 0)
+                self.root.after(0, self.callback_function, "NO VALUE")
                 self.root.after(0, self.close_window)
         except Exception as e:
             print(f"Error in cancel_callback: {e}")
 
+    def ok_callback(self):
+        if self.is_stable:
+            try:
+                if self.root.winfo_exists():
+                    self.root.after(0, self.callback_function, self.stable[0])
+                    self.root.after(0, self.close_window)
+            except Exception as e:
+                print(f"Error in cancel_callback: {e}")
+        else:
+            self.anim3.resume()
+            self.started = True
+            self.btn_ok.configure(True,text="OK", state="disabled")
+
     def updateGauge(self, frame):
-        data = self._arduino.readline()
-        self.stable.insert(0, data)
-        if (len(self.stable) >= 5):
-            self.stable.pop()
-            if all(d == self.stable[0] for d in self.stable):
-                print(self.stable)
-                self.anim3.pause()
+        if self.started:
+            data = self._arduino.readline()
+            self.stable.insert(0, data)
+            if (len(self.stable) >= 5):
+                self.stable.pop()
+                if all(d == self.stable[0] for d in self.stable):
+                    print(self.stable)
+                    self.is_stable = True
+                    self.anim3.pause()
+                    self.btn_ok.configure(True,state="normal")
 
-        if self.highest < data:
-            self.highest = data
-        if self.lowest > data:
-            self.lowest = data
-        self.plt_gauge.theta1 = max(0, min(180, 180 - ((data - self.lowest) / (self.highest - self.lowest) * 180)))
+            if self.highest < data:
+                self.highest = data
+            if self.lowest > data:
+                self.lowest = data
+            self.plt_gauge.theta1 = max(0, min(180, 180 - ((data - self.lowest) / (self.highest - self.lowest) * 180)))
 
-        self.tx_gaud.set(value=f'[ {self.lowest :.2f} / {data :.2f} kg /  {self.highest :.2f} kg ]')
-        self.tx_list.set(value=f"[ LIST of values: ]\n{','.join(str(d) for d in self.stable)}")
+            self.tx_gaud.set(value=f'[ {self.lowest :.2f} / {data :.2f} kg /  {self.highest :.2f} kg ]')
+            self.tx_list.set(value=f"[ LIST of values: ]\n\n [ {" ] kg\n [ ".join(str(d) for d in self.stable)} ] kg")
 
-        return self.plt_gauge
+            return self.plt_gauge
+        
+        else:
+            return self.plt_gauge
 
     def test(self, cal: str) -> bool:
         print(cal)
@@ -107,7 +136,7 @@ class UI:
 # 1kg value -> v1 = value (with 1kg)
 # 2kg value -> v2 = value (with 2kg)
     
-def callback_function(x: int):
+def callback_function(x):
     print(f"END: {x}")
 
 
