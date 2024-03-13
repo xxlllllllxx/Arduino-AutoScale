@@ -60,7 +60,7 @@ class UI:
 
             # GAUGE
             self.gauge_arc.theta1 = (180 - (value / self.largest * 180))
-            self.tx_element.set_text(f'{value:.2f} / {self.largest:2f}')
+            self.tx_element.set_text(f'{value:.2f} / {self.largest:.2f}')
 
         except Exception as e:
             print(f"Error reading data: {e}")
