@@ -12,7 +12,7 @@ import customtkinter as ctk
 import src.lcs_graph as monitor
 import src.lcs_calibration as calibrate
 # ARDUINO or MOCK
-import src.lcs_serial as serial
+import src.lcs_serial_mock as serial
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib
@@ -53,12 +53,12 @@ class App:
         self.x_data = list(range(self.max_x_data))
         self.y_data = deque(maxlen=self.max_x_data)
 
-        self.cal_fig = Figure(figsize=(14, 5), dpi=50, constrained_layout=False)
+        self.cal_fig = Figure(figsize=(14, 4), dpi=50, constrained_layout=False)
         self.bar_grp = self.cal_fig.add_subplot(111)
         self.bar_grp.set_ylim(self.lowest - 1, self.highest)
         self.plt_bar = self.bar_grp.bar(self.x_data, [0] * self.max_x_data)
 
-        self.mon_fig = Figure(figsize=(14, 5), dpi=50, constrained_layout=False)
+        self.mon_fig = Figure(figsize=(14, 4), dpi=50, constrained_layout=False)
         self.line_grp = self.mon_fig.add_subplot(111)
         self.plt_line = self.line_grp.plot(self.x_data, [0] * self.max_x_data, lw=2)
 
@@ -76,8 +76,8 @@ class App:
         self.tx_cal = ctk.StringVar(value="[ 0.00000 ] kg")
         self.calibration_result = 1
         self.accuracy = ctk.IntVar(value=5)
-        self.neg_a = ctk.StringVar(value=f"Negative Calibration  = [ {self._arduino.negative_calibration} ]")
-        self.pre_a = ctk.StringVar(value=f"Precision Calibration = [ {self._arduino.precision_adjustment} ]")
+        self.neg_a = ctk.StringVar(value=f"Negative Calibration  = [ {self._arduino.negative_calibration:.2f} ]")
+        self.pre_a = ctk.StringVar(value=f"Precision Calibration = [ {self._arduino.precision_adjustment:.2f} ]")
 
         # UI
         self.root.title(title)
@@ -101,9 +101,9 @@ class App:
         ctk.CTkLabel(cal_fm_sel_unit, textvariable=self.neg_a, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew")
         ctk.CTkLabel(cal_fm_sel_unit, textvariable=self.pre_a, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew")
         
-        ctk.CTkLabel(cal_fm_sel_unit, textvariable=self.tx_cal, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew")
+        ctk.CTkLabel(cal_fm, textvariable=self.tx_cal, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew", row=4, column=2)
         ctk.CTkButton(cal_fm, text="CALIBRATE", font=self.font_button, command=self._calibrationUI).grid(
-            padx=self.pad, pady=self.pad, sticky="sew", row=4, column=3, rowspan=1)
+            padx=self.pad, pady=self.pad, sticky="sew", row=4, column=3)
 
         
 
@@ -153,7 +153,7 @@ class App:
         if type(data) is float:
             self._arduino.negative_calibration = data
 
-            self.neg_a.set(value=f"Negative Calibration  = [ {self._arduino.negative_calibration} ]")
+            self.neg_a.set(value=f"Negative Calibration  = [ {self._arduino.negative_calibration:.2f} ]")
             calibrate.UI("Calibrate with weight", self._arduino, self._calibrationCallback2,accuracy=self.accuracy.get(), has_weight=True).start()
 
         elif type(data) is str:
@@ -166,8 +166,8 @@ class App:
         if type(data) is float:
             self.calibration_result = data
             self._arduino.precision_adjustment = data
-            self.tx_cal.set(value=f"[  {self.calibration_result:.2f}  ] kg")
-            self.pre_a.set(value=f"Precision Calibration  = [ {self._arduino.precision_adjustment} ]")
+            self.tx_cal.set(value=f"Currently calibrated to [  {self.calibration_result:.5f}  ] kg")
+            self.pre_a.set(value=f"Precision Calibration  = [ {self._arduino.precision_adjustment:.2f} ]")
         self._is_paused = False
 
     def _monitorUI(self) -> bool:
