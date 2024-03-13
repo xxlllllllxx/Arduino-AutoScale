@@ -1,4 +1,4 @@
-### Arduino Load Cell Sensor with Python UI
+# Arduino Load Cell Sensor with Python UI
 
 ## Materials:
 - Arduino Uno board
