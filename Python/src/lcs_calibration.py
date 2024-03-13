@@ -1,6 +1,5 @@
 
 import customtkinter as ctk
-import lcs_serial_mock as serial
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from matplotlib.figure import Figure

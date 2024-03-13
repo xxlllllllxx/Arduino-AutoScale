@@ -1,5 +1,5 @@
-# TODO: change tp [ src.lcs_serial_mock as serial ] for realtime data
-# env: config
+
+## CONFIGURATION #########
 # pip install pyserial
 # pip install matplotlib
 # pip install customtkinter
@@ -22,6 +22,8 @@ matplotlib.use("TkAgg")
 ctk.set_appearance_mode("dark")
 plt.style.use("dark_background")
 title = "Arduino Project"
+port = "" # check in arduino
+baudrate = "" # check in arduino
 
 
 class App:
@@ -83,12 +85,16 @@ class App:
         calibrate.UI("Calibrate without weight", self._arduino, self._calibrationCallback1).start()
 
     def _calibrationCallback1(self, data):
-        if data != 0:
+        if data is int or float:
             self.calibration_result = data
             self._arduino.no_weight = self.calibration_result
-            calibrate.UI("Calibrate with weight", self._arduino, self._calibrationCallback1).start()
+            calibrate.UI("Calibrate with weight", self._arduino, self._calibrationCallback2).start()
+        elif data is str:
+            self._is_paused = False
         else:
             self._is_paused = False
+            print("ERROR: CAL1")
+            print(data)
 
     def _calibrationCallback2(self, data):
         if data != 0:
@@ -193,7 +199,7 @@ class App:
 
 if __name__ == "__main__":
     # NOTE: Configure this port and baudrate
-    arduino = serial.Arduino('/dev/ttyACM0', 9600, interval=1000, negative_cal=94, precision_adj=90)
+    arduino = serial.Arduino(port, baudrate, interval=100, negative_cal=94, precision_adj=90)
     app = App(arduino)
 
     app.start()
