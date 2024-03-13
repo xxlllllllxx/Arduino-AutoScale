@@ -13,7 +13,6 @@
 - Arduino IDE
 - Python
 - VS Code (optional)
-- 
 
 ## Usage:
 1. Clone this repository: [Arduino Project](https://github.com/xxlllllllxx/Arduino-Project.git)
