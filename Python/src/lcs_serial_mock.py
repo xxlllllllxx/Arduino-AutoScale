@@ -9,7 +9,7 @@ class Arduino:
         self.precision_adjustment = 1
 
     def readline(self):
-        value = random.randint(0, 4)
+        value = random.randint(0, 10)
         return self.calibrate(value)
 
     def calibrate(self, raw_float: float) -> float:
