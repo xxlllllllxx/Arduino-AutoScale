@@ -120,7 +120,7 @@ class App:
         self.cal_cvs.get_tk_widget().grid(sticky=ctk.NSEW)
         self.cal_cvs._tkcanvas.grid(padx=self.pad, pady=self.pad, sticky=ctk.NSEW)
 
-        self.anim = FuncAnimation(self.cal_fig, lambda frame: self.updateCal(frame), frames=range(100), interval=self._arduino.interval)
+        self.anim = FuncAnimation(self.cal_fig, lambda frame: self.updateCal(frame), frames=range(100), interval=self._arduino.interval + 3)
 
         mon_fm = ctk.CTkFrame(self.root)
         mon_fm.grid(padx=self.pad + 10, pady=self.pad, sticky="new")
@@ -133,7 +133,7 @@ class App:
         self.mon_cvs.get_tk_widget().grid(sticky=ctk.NSEW)
         self.mon_cvs._tkcanvas.grid(padx=self.pad, pady=self.pad, sticky=ctk.NSEW)
 
-        self.anim2 = FuncAnimation(self.mon_fig, lambda frame: self.updateMon(frame), frames=range(100), interval=self._arduino.interval + 1)
+        self.anim2 = FuncAnimation(self.mon_fig, lambda frame: self.updateMon(frame), frames=range(100), interval=self._arduino.interval + 2)
 
         mon_fm_gaud = ctk.CTkFrame(mon_fm)
         mon_fm_gaud.grid(padx=self.pad, pady=self.pad, sticky="nsew", column=1, row=1)
@@ -143,7 +143,7 @@ class App:
 
         ctk.CTkLabel(mon_fm_gaud, textvariable=self.tx_gaud, font=self.font_button).grid(sticky="NEW")
 
-        self.anim3 = FuncAnimation(self.gauge_fig, lambda frame: self.updateGauge(frame), frames=range(100), interval=self._arduino.interval + 2)
+        self.anim3 = FuncAnimation(self.gauge_fig, lambda frame: self.updateGauge(frame), frames=range(100), interval=self._arduino.interval + 1)
 
         plt.show()
 

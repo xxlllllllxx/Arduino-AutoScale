@@ -1,5 +1,6 @@
 
 import customtkinter as ctk
+import lcs_serial_mock as serial
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from matplotlib.figure import Figure
@@ -9,8 +10,10 @@ from matplotlib.animation import FuncAnimation
 
 class UI:
     def __init__(self, title, arduino, callback_function):
+        print(f"START: {title}")
         self.root = ctk.CTk()
         self.root.title(title)
+        self.root.geometry("500x300")
         self.callback_function = callback_function
         self._arduino = arduino
 
@@ -35,7 +38,6 @@ class UI:
         self.lowest = 0
 
         self.root.title(title)
-        self.root.resizable(False, False)
         self.font_title = ('Arial', 16)
         self.font_text = ('Arial', 12)
         self.font_button = ('Arial', 14)
@@ -60,6 +62,8 @@ class UI:
 
         ctk.CTkButton(self.root, text="Cancel", command=self.cancel_callback).grid(padx=self.pad, pady=self.pad, row=1, column=2)
         ctk.CTkButton(self.root, text="START", command=self.start).grid(padx=self.pad, pady=self.pad, row=1, column=3)
+
+        self.root.mainloop()
 
     def cancel_callback(self):
         self.is_cancelled = True
@@ -102,3 +106,11 @@ class UI:
 # ADD weight
 # 1kg value -> v1 = value (with 1kg)
 # 2kg value -> v2 = value (with 2kg)
+    
+def callback_function(x: int):
+    print(f"END: {x}")
+
+
+if __name__ == "__main__":
+    UI("TEST", arduino=serial.Arduino("0", 0, 100, 94, 90), callback_function=callback_function).start()
+
