@@ -22,8 +22,9 @@ import matplotlib.pyplot as plt
 matplotlib.use("TkAgg")
 ctk.set_appearance_mode("dark")
 plt.style.use("dark_background")
-title = "Arduino Project"
 
+
+title = "Arduino Project" # for TITLE
 
 # NOTE: Configure this port and baudrate
 port = "" # check in arduino
@@ -52,7 +53,7 @@ class App:
         self.x_data = list(range(self.max_x_data))
         self.y_data = deque(maxlen=self.max_x_data)
 
-        self.cal_fig = Figure(figsize=(12, 5), dpi=50, constrained_layout=False)
+        self.cal_fig = Figure(figsize=(14, 5), dpi=50, constrained_layout=False)
         self.bar_grp = self.cal_fig.add_subplot(111)
         self.bar_grp.set_ylim(self.lowest - 1, self.highest)
         self.plt_bar = self.bar_grp.bar(self.x_data, [0] * self.max_x_data)
@@ -91,18 +92,18 @@ class App:
         cal_fm.grid(padx=self.pad + 10, pady=self.pad, sticky="new")
         ctk.CTkLabel(cal_fm, text="CALIBRATION", font=self.font_title).grid(padx=self.pad, pady=self.pad, sticky="nw")
         cal_fm_graph = ctk.CTkFrame(cal_fm, width=500)
-        cal_fm_graph.grid(padx=self.pad, pady=self.pad, sticky="nsew", row=1, column=0, columnspan=3, rowspan=2)
+        cal_fm_graph.grid(padx=self.pad, pady=self.pad, sticky="nsew", row=1, column=0, columnspan=3)
         cal_fm_sel_unit = ctk.CTkFrame(cal_fm)
-        cal_fm_sel_unit.grid(padx=self.pad, pady=self.pad, sticky="nsew", row=1, column=3, rowspan=2)
+        cal_fm_sel_unit.grid(padx=self.pad, pady=self.pad, sticky="nsew", row=1, column=3, rowspan=3)
         ctk.CTkLabel(cal_fm_sel_unit, text="SETTINGS").grid(padx=self.pad, pady=self.pad, sticky="NW")
-        ctk.CTkLabel(cal_fm_sel_unit, text="Enter calibration accuracy     :").grid(padx=self.pad, pady=[0, self.pad], sticky="SEW")
+        ctk.CTkLabel(cal_fm_sel_unit, text="Enter calibration accuracy                   :").grid(padx=self.pad, pady=[0, self.pad], sticky="SEW")
         ctk.CTkEntry(cal_fm_sel_unit, textvariable=self.accuracy).grid(padx=self.pad, pady=[0, self.pad], sticky="NEW")
         ctk.CTkLabel(cal_fm_sel_unit, textvariable=self.neg_a, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew")
         ctk.CTkLabel(cal_fm_sel_unit, textvariable=self.pre_a, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew")
         
-        ctk.CTkLabel(cal_fm, textvariable=self.tx_cal, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew", row=1, column=4)
+        ctk.CTkLabel(cal_fm_sel_unit, textvariable=self.tx_cal, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew")
         ctk.CTkButton(cal_fm, text="CALIBRATE", font=self.font_button, command=self._calibrationUI).grid(
-            padx=self.pad, pady=self.pad, sticky="sew", row=2, column=4)
+            padx=self.pad, pady=self.pad, sticky="sew", row=4, column=3, rowspan=1)
 
         
 
@@ -137,6 +138,9 @@ class App:
 
         plt.show()
 
+        ctk.CTkButton(mon_fm, text="SHOW FULL GRAPH", font=self.font_button, command=self._monitorUI).grid(
+            padx=self.pad, pady=self.pad, sticky="sew", row=2, column=1)
+
         self.root.mainloop()
 
     def _calibrationUI(self) -> bool:
@@ -167,7 +171,7 @@ class App:
         self._is_paused = False
 
     def _monitorUI(self) -> bool:
-        result = monitor.UI()
+        monitor.UI(self._arduino)
 
     def updateCal(self, frame):
         if not self._is_paused:
@@ -192,7 +196,6 @@ class App:
     def updateGauge(self, frame):
         if not self._is_paused:
             data = self._arduino.readline()
-            # self.plt_gauge.theta1 = max(0, min(90, 90 - ((data - self.lowest) / (self.highest - self.lowest) * 90)))
             self.plt_gauge.theta1 = max(0, min(180, 180 - ((data - self.lowest) / (self.highest - self.lowest) * 180)))
 
             self.tx_gaud.set(value=f'[ {self.lowest :.2f} / {data :.2f} kg /  {self.highest :.2f} kg ]')
