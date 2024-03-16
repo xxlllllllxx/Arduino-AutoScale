@@ -17,13 +17,13 @@
 ## Usage:
 1. Clone this repository: [Arduino Project](https://github.com/xxlllllllxx/Arduino-Project.git)
 2. Open the project in VS Code.
-3. Navigate to `/Arduino/main.ino` and open [main.ino](https://github.com/xxlllllllxx/Arduino-Project/blob/main/Adruino/main.ino).
+3. Navigate to `/Arduino/main.ino` and open [main.ino](https://github.com/xxlllllllxx/Arduino-Project/blob/main/Adruino/main/main.ino).
 4. Connect the Arduino board, Hx711, and Load cell sensor with the provided configuration.
 5. Connect the Arduino board to the PC using a USB connector.
 6. Identify the port of the Arduino.
 7. Go to `/Python/main.py` and open [main.py](https://github.com/xxlllllllxx/Arduino-Project/blob/main/Python/main.py).
 8. Modify line 30 in [main.py](https://github.com/xxlllllllxx/Arduino-Project/blob/main/Python/main.py) to match the Arduino port.
-9. Upload and run [main.ino](https://github.com/xxlllllllxx/Arduino-Project/blob/main/Adruino/main.ino).
+9. Upload and run [main.ino](https://github.com/xxlllllllxx/Arduino-Project/blob/main/Adruino/main/main.ino).
 10. Run [main.py](https://github.com/xxlllllllxx/Arduino-Project/blob/main/Python/main.py).
 11. Observe the graphs.
 
