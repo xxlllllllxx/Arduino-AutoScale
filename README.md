@@ -1,4 +1,5 @@
-# Arduino Load Cell Sensor with Python UI
+# Arduino Project - Auto Scale
+Project using Load Cell Sensor with Python UI for Graphs
 
 ## Materials:
 - Arduino Uno board
