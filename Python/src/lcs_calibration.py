@@ -8,6 +8,8 @@ from matplotlib.animation import FuncAnimation
 import matplotlib
 import matplotlib.pyplot as plt
 
+from Python.src.lcs_serial import Arduino
+
 # import lcs_serial_mock as serial
 
 
@@ -17,7 +19,7 @@ plt.style.use("dark_background")
 
 
 class UI:
-    def __init__(self, title, arduino, callback_function, accuracy: int = 5, has_weight:bool=False):
+    def __init__(self, title, arduino: Arduino, callback_function, accuracy: int = 5, has_weight:bool=False):
         print(f"START: {title}")
         self.root = ctk.CTk()
         self.root.attributes('-topmost',True)
@@ -109,8 +111,10 @@ class UI:
             self.btn_ok.configure(True,text="OK", state="disabled")
 
     def updateGauge(self, frame):
+        cal:bool = not self.has_weight
+        cal2:bool = self.has_weight
         if self.started:
-            data = self._arduino.readline()
+            data = self._arduino.readline(cal, cal2)
             self.stable.insert(0, float(data))
             if (len(self.stable) > self.accuracy):
                 self.stable.pop()
