@@ -12,7 +12,7 @@ import customtkinter as ctk
 import src.lcs_graph as monitor
 import src.lcs_calibration as calibrate
 # ARDUINO or MOCK
-import src.lcs_serial as serial
+import src.lcs_serial_mock as serial
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib
@@ -24,11 +24,11 @@ ctk.set_appearance_mode("dark")
 plt.style.use("dark_background")
 
 
-title = "Arduino Project" # for TITLE
+title = "Arduino Project"  # for TITLE
 
 # NOTE: Configure this port and baudrate
-port = "" # check in arduino
-baudrate = 9600 # check in arduino
+port = ""  # check in arduino
+baudrate = 9600  # check in arduino
 
 
 class App:
@@ -90,47 +90,45 @@ class App:
     def start(self):
         cal_fm = ctk.CTkFrame(self.root)
         cal_fm.grid(padx=self.pad + 10, pady=self.pad, sticky="new")
-        ctk.CTkLabel(cal_fm, text="CALIBRATION", font=self.font_title).grid(padx=self.pad, pady=self.pad, sticky="nw")
+        ctk.CTkLabel(cal_fm, text="CALIBRATION", font=self.font_title).grid(padx=self.pad, sticky="nw")
         cal_fm_graph = ctk.CTkFrame(cal_fm, width=500)
-        cal_fm_graph.grid(padx=self.pad, pady=self.pad, sticky="nsew", row=1, column=0, columnspan=3)
+        cal_fm_graph.grid(padx=self.pad, pady=self.pad/2, sticky="nsew", row=1, column=0, columnspan=3)
         cal_fm_sel_unit = ctk.CTkFrame(cal_fm)
-        cal_fm_sel_unit.grid(padx=self.pad, pady=self.pad, sticky="nsew", row=1, column=3, rowspan=3)
+        cal_fm_sel_unit.grid(padx=self.pad, pady=self.pad/2, sticky="nsew", row=1, column=3, rowspan=3)
         ctk.CTkLabel(cal_fm_sel_unit, text="SETTINGS").grid(padx=self.pad, pady=self.pad, sticky="NW")
         ctk.CTkLabel(cal_fm_sel_unit, text="Enter calibration accuracy                   :").grid(padx=self.pad, pady=[0, self.pad], sticky="SEW")
         ctk.CTkEntry(cal_fm_sel_unit, textvariable=self.accuracy).grid(padx=self.pad, pady=[0, self.pad], sticky="NEW")
         ctk.CTkLabel(cal_fm_sel_unit, textvariable=self.neg_a, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew")
         ctk.CTkLabel(cal_fm_sel_unit, textvariable=self.pre_a, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew")
-        
+
         ctk.CTkLabel(cal_fm, textvariable=self.tx_cal, font=self.font_text).grid(padx=self.pad, pady=self.pad, sticky="sew", row=4, column=2)
         ctk.CTkButton(cal_fm, text="CALIBRATE", font=self.font_button, command=self._calibrationUI).grid(
-            padx=self.pad, pady=self.pad, sticky="sew", row=4, column=3)
-
-        
+            padx=self.pad, pady=self.pad/2, sticky="sew", row=4, column=3)
 
         self.cal_cvs = FigureCanvasTkAgg(self.cal_fig, cal_fm_graph)
         self.cal_cvs.get_tk_widget().grid(sticky=ctk.NSEW)
-        self.cal_cvs._tkcanvas.grid(padx=self.pad, pady=self.pad, sticky=ctk.NSEW)
+        self.cal_cvs._tkcanvas.grid(padx=self.pad, pady=self.pad/2, sticky=ctk.NSEW)
 
         self.anim = FuncAnimation(self.cal_fig, lambda frame: self.updateCal(frame), frames=range(100), interval=self._arduino.interval + 3)
 
         mon_fm = ctk.CTkFrame(self.root)
-        mon_fm.grid(padx=self.pad + 10, pady=self.pad, sticky="new")
-        ctk.CTkLabel(mon_fm, text="MONITOR", font=self.font_title).grid(padx=self.pad, pady=self.pad, sticky="nw")
+        mon_fm.grid(padx=self.pad + 10, pady=self.pad,  sticky="new")
+        ctk.CTkLabel(mon_fm, text="MONITOR", font=self.font_title).grid(padx=self.pad, sticky="nw")
 
         mon_fm_graph = ctk.CTkFrame(mon_fm, width=700)
-        mon_fm_graph.grid(padx=self.pad, pady=self.pad, sticky="nsew", column=0, row=1)
+        mon_fm_graph.grid(padx=self.pad, pady=self.pad/2, sticky="nsew", column=0, row=1, columnspan=4)
 
         self.mon_cvs = FigureCanvasTkAgg(self.mon_fig, mon_fm_graph)
         self.mon_cvs.get_tk_widget().grid(sticky=ctk.NSEW)
-        self.mon_cvs._tkcanvas.grid(padx=self.pad, pady=self.pad, sticky=ctk.NSEW)
+        self.mon_cvs._tkcanvas.grid(padx=self.pad, pady=self.pad/2, sticky=ctk.NSEW)
 
         self.anim2 = FuncAnimation(self.mon_fig, lambda frame: self.updateMon(frame), frames=range(100), interval=self._arduino.interval + 2)
 
         mon_fm_gaud = ctk.CTkFrame(mon_fm)
-        mon_fm_gaud.grid(padx=self.pad, pady=self.pad, sticky="nsew", column=1, row=1)
+        mon_fm_gaud.grid(padx=self.pad, pady=self.pad, sticky="nsew", column=4, row=1)
         self.gauge_cvs = FigureCanvasTkAgg(self.gauge_fig, mon_fm_gaud)
         self.gauge_cvs.get_tk_widget().grid(sticky=ctk.NSEW)
-        self.gauge_cvs._tkcanvas.grid(padx=self.pad, pady=self.pad, sticky=ctk.NSEW)
+        self.gauge_cvs._tkcanvas.grid(padx=self.pad, pady=self.pad/2, sticky=ctk.NSEW)
 
         ctk.CTkLabel(mon_fm_gaud, textvariable=self.tx_gaud, font=self.font_button).grid(sticky="NEW")
 
@@ -139,9 +137,16 @@ class App:
         plt.show()
 
         ctk.CTkButton(mon_fm, text="SHOW FULL GRAPH", font=self.font_button, command=self._monitorUI).grid(
-            padx=self.pad, pady=self.pad, sticky="sew", row=2, column=1)
+            padx=self.pad, pady=self.pad/2, sticky="sew", row=2, column=4)
+
+        ctk.CTkLabel(mon_fm, text="Record label: ", font=self.font_text).grid(padx=self.pad, pady=self.pad/2, sticky="sew", row=2, column=0)
+        ctk.CTkButton(mon_fm, text="LOG", font=self.font_button, command=self._record).grid(
+            padx=self.pad, pady=self.pad/2, sticky="ne", row=2, column=3)
 
         self.root.mainloop()
+
+    def _record(self, frame):
+        pass
 
     def _calibrationUI(self) -> bool:
         self._is_paused = True
@@ -154,7 +159,7 @@ class App:
             self._arduino.negative_calibration = data
 
             self.neg_a.set(value=f"Negative Calibration  = [ {self._arduino.negative_calibration:.2f} ]")
-            calibrate.UI("Calibrate with weight", self._arduino, self._calibrationCallback2,accuracy=self.accuracy.get(), has_weight=True).start()
+            calibrate.UI("Calibrate with weight", self._arduino, self._calibrationCallback2, accuracy=self.accuracy.get(), has_weight=True).start()
 
         elif type(data) is str:
             self._is_paused = False
@@ -215,7 +220,7 @@ class App:
 
 
 if __name__ == "__main__":
-    arduino = serial.Arduino(port, baudrate, interval=100, negative_cal=94, precision_adj=90)
+    arduino = serial.Arduino(port, baudrate, interval=100, negative_cal=1, precision_adj=1)
     app = App(arduino)
 
     app.start()

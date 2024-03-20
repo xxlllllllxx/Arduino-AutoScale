@@ -7,9 +7,6 @@ from matplotlib.patches import Arc
 from matplotlib.animation import FuncAnimation
 import matplotlib
 import matplotlib.pyplot as plt
-
-from Python.src.lcs_serial import Arduino
-
 # import lcs_serial_mock as serial
 
 
@@ -19,10 +16,10 @@ plt.style.use("dark_background")
 
 
 class UI:
-    def __init__(self, title, arduino: Arduino, callback_function, accuracy: int = 5, has_weight:bool=False):
+    def __init__(self, title, arduino, callback_function, accuracy: int = 5, has_weight: bool = False):
         print(f"START: {title}")
         self.root = ctk.CTk()
-        self.root.attributes('-topmost',True)
+        self.root.attributes('-topmost', True)
         self.accuracy = accuracy
         self.has_weight = has_weight
         self.root.title(title)
@@ -72,17 +69,15 @@ class UI:
         ctk.CTkLabel(mon_fm_gaud, textvariable=self.tx_gaud, font=self.font_button).grid(sticky="NEW")
         ctk.CTkLabel(self.root, textvariable=self.tx_list, font=self.font_button).grid(sticky="NEW", row=2, column=3)
 
-
-        if(self.has_weight):
-            ctk.CTkLabel(self.root, text="Enter Weight here in KG: ").grid(padx=self.pad, sticky="SEW", pady=[self.pad,0], row=0, column=3)
+        if (self.has_weight):
+            ctk.CTkLabel(self.root, text="Enter Weight here in KG: ").grid(padx=self.pad, sticky="SEW", pady=[self.pad, 0], row=0, column=3)
             self.ent_weight = ctk.CTkEntry(self.root, textvariable=self.weight)
             self.ent_weight.grid(padx=self.pad, pady=self.pad, row=1, column=3, sticky="NEW")
 
         ctk.CTkButton(self.root, text="Cancel", command=self.cancel_callback).grid(padx=self.pad, pady=self.pad, row=3, column=2)
         self.btn_ok = ctk.CTkButton(self.root, text="START", command=self.ok_callback)
         self.btn_ok.grid(padx=self.pad, pady=self.pad, row=3, column=3)
-        
-        
+
         self.anim3 = FuncAnimation(self.gauge_fig, lambda frame: self.updateGauge(frame), frames=range(100), interval=100)
         plt.show()
         self.root.mainloop()
@@ -108,11 +103,11 @@ class UI:
         else:
             self.anim3.resume()
             self.started = True
-            self.btn_ok.configure(True,text="OK", state="disabled")
+            self.btn_ok.configure(True, text="OK", state="disabled")
 
     def updateGauge(self, frame):
-        cal:bool = not self.has_weight
-        cal2:bool = self.has_weight
+        cal: bool = not self.has_weight
+        cal2: bool = self.has_weight
         if self.started:
             data = self._arduino.readline(cal, cal2)
             self.stable.insert(0, float(data))
@@ -122,7 +117,7 @@ class UI:
                     print(self.stable)
                     self.is_stable = True
                     self.anim3.pause()
-                    self.btn_ok.configure(True,state="normal")
+                    self.btn_ok.configure(True, state="normal")
 
             if self.highest < data:
                 self.highest = data
@@ -131,10 +126,14 @@ class UI:
             self.plt_gauge.theta1 = max(0, min(180, 180 - ((data - self.lowest) / (self.highest - self.lowest) * 180)))
 
             self.tx_gaud.set(value=f'[ {self.lowest :.2f} / {data :.2f} kg /  {self.highest :.2f} kg ]')
-            self.tx_list.set(value=f"LIST of values:\n [ {" ] kg\n [ ".join(str("{0:.5f}".format(d)) for d in self.stable)} ] kg")
+            # Assuming self.stable is a list of values
+            formatted_values = ['{0:.5f}'.format(d) for d in self.stable]
+            formatted_values_string = ' ] kg\n[ '.join(formatted_values)
+            output_string = "LIST of values: \n\n[ " + formatted_values_string + " ] kg"
+            self.tx_list.set(value=output_string)
 
             return self.plt_gauge
-        
+
         else:
             return self.plt_gauge
 
@@ -149,11 +148,11 @@ class UI:
 # ADD weight
 # 1kg value -> v1 = value (with 1kg)
 # 2kg value -> v2 = value (with 2kg)
-    
+
+
 def callback_function(x):
     print(f"END: {x}")
 
 
 if __name__ == "__main__":
-    UI("TEST", arduino=serial.Arduino("0", 0, 100, 94, 90), callback_function=callback_function,accuracy=5, has_weight=True).start()
-
+    UI("TEST", arduino=serial.Arduino("0", 0, 100, 94, 90), callback_function=callback_function, accuracy=5, has_weight=True).start()
