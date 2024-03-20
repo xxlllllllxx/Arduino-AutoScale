@@ -3,6 +3,7 @@
 # pip install pyserial
 # pip install matplotlib
 # pip install customtkinter
+# pip install openpyxl
 
 from matplotlib.patches import Arc
 from matplotlib.animation import FuncAnimation
@@ -17,6 +18,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib
 import matplotlib.pyplot as plt
+import datetime
+from openpyxl import Workbook, load_workbook
+import threading
+import time
 
 
 matplotlib.use("TkAgg")
@@ -69,6 +74,12 @@ class App:
         self.gauge_ax.add_patch(self.plt_gauge)
         self.gauge_ax.axis('off')
         self.tx_gaud = ctk.StringVar(value="GAUGE")
+
+        # RECORD
+        self.tx_record = ctk.StringVar()
+        self.file_loc: str = "Python/data/data_sheet.xlsx"
+        self.workbook: Workbook = load_workbook(self.file_loc)
+        self.sheet = self.workbook.active
 
         # CALIBRATION
         self.selected_calibration: int = 1
@@ -139,14 +150,54 @@ class App:
         ctk.CTkButton(mon_fm, text="SHOW FULL GRAPH", font=self.font_button, command=self._monitorUI).grid(
             padx=self.pad, pady=self.pad/2, sticky="sew", row=2, column=4)
 
-        ctk.CTkLabel(mon_fm, text="Record label: ", font=self.font_text).grid(padx=self.pad, pady=self.pad/2, sticky="sew", row=2, column=0)
-        ctk.CTkButton(mon_fm, text="LOG", font=self.font_button, command=self._record).grid(
-            padx=self.pad, pady=self.pad/2, sticky="ne", row=2, column=3)
+        ctk.CTkLabel(mon_fm, text="Record label: ", font=self.font_text).grid(padx=self.pad, pady=self.pad/2, sticky="ne", row=2, column=0)
+        ctk.CTkEntry(mon_fm, textvariable=self.tx_record, width=400).grid(
+            padx=self.pad, pady=self.pad/2, sticky="ne", row=2, column=1)
+        self.status_label = ctk.CTkLabel(mon_fm, text="", text_color="blue")
+        self.status_label.grid(padx=self.pad, pady=self.pad/2, sticky="nw", row=2, column=2)
+        self.logger = ctk.CTkButton(mon_fm, text="LOG", font=self.font_button, command=self._record, )
+        self.logger.grid(padx=self.pad, pady=self.pad/2, sticky="nw", row=2, column=3)
 
         self.root.mainloop()
 
-    def _record(self, frame):
-        pass
+    def _record_thread(self):
+        if self.tx_record.get():
+            self.update_status("Logging", "blue")
+            label: str = self.tx_record.get()
+            value1: str = self._arduino.readline()
+            time.sleep(self._arduino.interval/100)
+            value2: str = self._arduino.readline()
+            time.sleep(self._arduino.interval/100)
+            value3: str = self._arduino.readline()
+            dt: datetime.datetime = datetime.datetime.now()
+            d: str = dt.strftime("%a, %b %d, %Y")
+            t: str = dt.strftime("%I : %m : %S : %f")
+            try:
+                self.sheet.append([d, t, label, value1, value2, value3])
+                self.workbook.save(self.file_loc)
+                self.update_status("Saved!", "Green")
+                self.update_record()
+            except Exception as e:
+                self.update_status("Error!", "red")
+        else:
+            self.update_status("Empty!", "orange")
+
+        self.update_logger()
+        time.sleep(3)
+        self.update_status()
+
+    def update_status(self, label: str = "", color: str = "blue"):
+        self.status_label.configure(text=label, text_color=color)
+
+    def update_record(self, txt: str = ""):
+        self.tx_record.set(txt)
+
+    def update_logger(self):
+        self.logger.configure(state="normal")
+
+    def _record(self):
+        self.logger.configure(state="disabled")
+        threading.Thread(target=self._record_thread).start()
 
     def _calibrationUI(self) -> bool:
         self._is_paused = True
