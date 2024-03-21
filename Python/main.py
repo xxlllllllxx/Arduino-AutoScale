@@ -13,7 +13,7 @@ import customtkinter as ctk
 import src.lcs_graph as monitor
 import src.lcs_calibration as calibrate
 # ARDUINO or MOCK
-import src.lcs_serial_mock as serial
+import src.lcs_serial as serial
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib
@@ -32,7 +32,7 @@ plt.style.use("dark_background")
 title = "Arduino Project"  # for TITLE
 
 # NOTE: Configure this port and baudrate
-port = ""  # check in arduino
+port = "COM3"  # check in arduino
 baudrate = 9600  # check in arduino
 
 
@@ -77,7 +77,7 @@ class App:
 
         # RECORD
         self.tx_record = ctk.StringVar()
-        self.file_loc: str = "Python/data/data_sheet.xlsx"
+        self.file_loc: str = "data/data_sheet.xlsx"
         self.workbook: Workbook = load_workbook(self.file_loc)
         self.sheet = self.workbook.active
 
@@ -205,7 +205,6 @@ class App:
         calibrate.UI("Calibrate without weight", self._arduino, self._calibrationCallback1, accuracy=self.accuracy.get()).start()
 
     def _calibrationCallback1(self, data):
-        print(data)
         if type(data) is float:
             self._arduino.negative_calibration = data
 
@@ -271,7 +270,9 @@ class App:
 
 
 if __name__ == "__main__":
-    arduino = serial.Arduino(port, baudrate, interval=100, negative_cal=1, precision_adj=1)
+    arduino = serial.Arduino(port, baudrate, interval=500, negative_cal=1, precision_adj=1)
     app = App(arduino)
-
     app.start()
+
+    # while True: 
+    #     print(arduino.readline())
