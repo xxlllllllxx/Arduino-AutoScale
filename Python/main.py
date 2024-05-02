@@ -4,6 +4,7 @@
 # pip install matplotlib
 # pip install customtkinter
 # pip install openpyxl
+# install c++_redis2015
 
 from matplotlib.patches import Arc
 from matplotlib.animation import FuncAnimation
