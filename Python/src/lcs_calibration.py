@@ -43,6 +43,7 @@ class UI:
         self.is_stable = False
         self.is_cancelled = False
         self.started = False
+        self.ent_weight = ctk.CTkEntry(self.root, textvariable=self.weight)
 
         self.highest = 1
         self.lowest = 0
@@ -87,8 +88,8 @@ class UI:
         self.is_stable = True
         try:
             if self.root.winfo_exists():
-                self.root.after(0, self.callback_function, "NO VALUE")
-                self.root.after(0, self.close_window)
+                self.root.after(1, self.callback_function, "NO VALUE", 0)
+                self.root.after(2, self.close_window)
         except Exception as e:
             print(f"Error in cancel_callback: {e}")
 
@@ -96,8 +97,8 @@ class UI:
         if self.is_stable:
             try:
                 if self.root.winfo_exists():
-                    self.root.after(0, self.callback_function, self.stable[0])
-                    self.root.after(0, self.close_window)
+                    self.root.after(1, self.callback_function, self.stable[0], float(self.ent_weight.get()))
+                    self.root.after(2, self.close_window)
             except Exception as e:
                 print(f"Error in cancel_callback: {e}")
         else:
@@ -135,6 +136,13 @@ class UI:
             return self.plt_gauge
 
         else:
+            data = self._arduino.readline(cal, cal2)
+            if self.highest < data:
+                self.highest = data
+            if self.lowest > data:
+                self.lowest = data
+            self.plt_gauge.theta1 = max(0, min(180, 180 - ((data - self.lowest) / (self.highest - self.lowest) * 180)))
+            self.tx_gaud.set(value=f'[ {self.lowest :.2f} / {data :.2f} kg /  {self.highest :.2f} kg ]')
             return self.plt_gauge
 
     def test(self, cal: str) -> bool:

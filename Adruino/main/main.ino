@@ -17,8 +17,11 @@ void loop() {
     long reading = scale.read();
     reading = reading / 100;
     Serial.println(reading);
-  } 
+  } else {
+    Serial.println("scale not ready");
+  }
 
-  delay(100);
+
+  delay(200);
   
 }

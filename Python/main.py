@@ -7,7 +7,6 @@
 
 from matplotlib.patches import Arc
 from matplotlib.animation import FuncAnimation
-import serial
 from collections import deque
 import customtkinter as ctk
 import src.lcs_graph as monitor
@@ -32,9 +31,8 @@ plt.style.use("dark_background")
 title = "Arduino Project"  # for TITLE
 
 # NOTE: Configure this port and baudrate
-port = "COM3"  # check in arduino
+port = "/dev/ttyACM0"  # check in arduino
 baudrate = 9600  # check in arduino
-
 
 class App:
     def __init__(self, arduino: serial.Arduino):
@@ -77,9 +75,13 @@ class App:
 
         # RECORD
         self.tx_record = ctk.StringVar()
-        self.file_loc: str = "data/data_sheet.xlsx"
-        self.workbook: Workbook = load_workbook(self.file_loc)
-        self.sheet = self.workbook.active
+        self.point_load_dir: str = "Python/data/point_load.xlsx"
+        self.moving_dir: str = "Python/data/moving.xlsx"
+        self.plworkbook: Workbook = load_workbook(self.point_load_dir)
+        self.mworkbook: Workbook = load_workbook(self.moving_dir)
+        self.plsheet = self.plworkbook.active
+        self.msheet = self.mworkbook.active
+        self.is_recording = False
 
         # CALIBRATION
         self.selected_calibration: int = 1
@@ -143,14 +145,16 @@ class App:
 
         ctk.CTkLabel(mon_fm_gaud, textvariable=self.tx_gaud, font=self.font_button).grid(sticky="NEW")
 
-        self.anim3 = FuncAnimation(self.gauge_fig, lambda frame: self.updateGauge(frame), frames=range(100), interval=self._arduino.interval + 1)
+        self.anim3 = FuncAnimation(self.gauge_fig, lambda frame: self.updateGauge(frame), frames=range(100), interval=self._arduino.interval)
+        self.anim4 = FuncAnimation(self.gauge_fig, lambda frame: self.moving(frame), frames=range(100), interval=self._arduino.interval + 1)
 
         plt.show()
 
         ctk.CTkButton(mon_fm, text="SHOW FULL GRAPH", font=self.font_button, command=self._monitorUI).grid(
             padx=self.pad, pady=self.pad/2, sticky="sew", row=2, column=4)
 
-        ctk.CTkLabel(mon_fm, text="Record label: ", font=self.font_text).grid(padx=self.pad, pady=self.pad/2, sticky="ne", row=2, column=0)
+        self.ctkCmb = ctk.CTkComboBox(mon_fm, values=('Point Load', 'Moving Load'), dropdown_font=self.font_text)
+        self.ctkCmb.grid(padx=self.pad, pady=self.pad/2, sticky="ne", row=2, column=0)
         ctk.CTkEntry(mon_fm, textvariable=self.tx_record, width=400).grid(
             padx=self.pad, pady=self.pad/2, sticky="ne", row=2, column=1)
         self.status_label = ctk.CTkLabel(mon_fm, text="", text_color="blue")
@@ -160,51 +164,88 @@ class App:
 
         self.root.mainloop()
 
-    def _record_thread(self):
-        if self.tx_record.get():
-            self.update_status("Logging", "blue")
+    def _record_thread(self, is_moving:bool):
+        if(is_moving):
+            if self.tx_record.get() and self.is_recording:
+                self.update_status("Logging", "blue")
+            else:
+                self.update_status("Empty!", "orange")
+        else:
+            if self.tx_record.get():
+                self.update_status("Logging", "blue")
+                label: str = self.tx_record.get()
+                value1: str = self._arduino.readline()
+                time.sleep(self._arduino.interval/100)
+                value2: str = self._arduino.readline()
+                time.sleep(self._arduino.interval/100)
+                value3: str = self._arduino.readline()
+                dt: datetime.datetime = datetime.datetime.now()
+                d: str = dt.strftime("%a, %b %d, %Y")
+                t: str = dt.strftime("%I : %m : %S : %f")
+                try:
+                    self.plsheet.append([d, t, '',label,'', value1, value2, value3, '', (value1+value2+value3)/3])
+                    self.plworkbook.save(self.point_load_dir)
+                    self.update_status("Saved!", "Green")
+                    self.update_record()
+                except Exception as e:
+                    self.update_status("Error!", "red")
+                    pr
+                    (e)
+            else:
+                self.update_status("Empty!", "orange")
+
+            self.update_logger()
+            time.sleep(3)
+            self.update_status()
+
+    def moving(self, frame):
+        if (self.is_recording and self.tx_record.get()):
             label: str = self.tx_record.get()
             value1: str = self._arduino.readline()
-            time.sleep(self._arduino.interval/100)
-            value2: str = self._arduino.readline()
-            time.sleep(self._arduino.interval/100)
-            value3: str = self._arduino.readline()
+            time.sleep(self._arduino.interval/1000)
             dt: datetime.datetime = datetime.datetime.now()
             d: str = dt.strftime("%a, %b %d, %Y")
             t: str = dt.strftime("%I : %m : %S : %f")
             try:
-                self.sheet.append([d, t, label, value1, value2, value3])
-                self.workbook.save(self.file_loc)
-                self.update_status("Saved!", "Green")
-                self.update_record()
+                self.msheet.append([d, t, '',label, '',value1])
+                self.mworkbook.save(self.moving_dir)
+                self.update_status("Logging", "Blue")
             except Exception as e:
                 self.update_status("Error!", "red")
-        else:
-            self.update_status("Empty!", "orange")
-
-        self.update_logger()
-        time.sleep(3)
-        self.update_status()
+                print(e)
 
     def update_status(self, label: str = "", color: str = "blue"):
-        self.status_label.configure(text=label, text_color=color)
+        self.status_label.after(1, self.status_label.configure(text=label, text_color=color))
 
     def update_record(self, txt: str = ""):
         self.tx_record.set(txt)
 
-    def update_logger(self):
-        self.logger.configure(state="normal")
+    def update_logger(self, state='normal'):
+        self.logger.after(1, self.logger.configure(state="normal"))
 
     def _record(self):
-        self.logger.configure(state="disabled")
-        threading.Thread(target=self._record_thread).start()
+        self.update_logger(state = 'disabled')
+        if(self.ctkCmb.get() == 'Moving Load'):
+            if (not self.tx_record.get()):
+                self.update_status("Empty!", "orange")
+            if (self.is_recording):
+                self.is_recording = False
+                self.update_record()
+                self.update_status('Saved!', 'green')
+            if(not self.is_recording and self.tx_record.get()):
+                self.is_recording = True
+                threading.Thread(target=lambda: self._record_thread(True).start())
+            
+        if(self.ctkCmb.get() == 'Point Load'):
+            threading.Thread(target=lambda: self._record_thread(False)).start()
 
     def _calibrationUI(self) -> bool:
         self._is_paused = True
         # TEST NO WEIGHT
         calibrate.UI("Calibrate without weight", self._arduino, self._calibrationCallback1, accuracy=self.accuracy.get()).start()
 
-    def _calibrationCallback1(self, data):
+    def _calibrationCallback1(self, data, ent):
+        print(data)
         if type(data) is float:
             self._arduino.negative_calibration = data
 
@@ -217,12 +258,12 @@ class App:
             self._is_paused = False
             print("ERROR: Cal1")
 
-    def _calibrationCallback2(self, data):
+    def _calibrationCallback2(self, data, kg):
         if type(data) is float:
             self.calibration_result = data
-            self._arduino.precision_adjustment = data
-            self.tx_cal.set(value=f"Currently calibrated to [  {self.calibration_result:.5f}  ] kg")
-            self.pre_a.set(value=f"Precision Calibration  = [ {self._arduino.precision_adjustment:.2f} ]")
+            self._arduino.precision_adjustment = data / kg
+            self.tx_cal.set(value=f"Currently calibrated to [  {kg:.2f}  ] kg")
+            self.pre_a.set(value=f"Precision Calibration  = [ {self._arduino.precision_adjustment:.2f} per 1kg ]")
         self._is_paused = False
 
     def _monitorUI(self) -> bool:
@@ -267,12 +308,12 @@ class App:
             self.bar_grp.set_ylim(self.lowest - 1, self.highest)
             self.line_grp.set_ylim(self.lowest - 1, self.highest)
             self.line_grp.relim()
+        
+        # if not self.highest == max(self.y_data):
 
 
 if __name__ == "__main__":
-    arduino = serial.Arduino(port, baudrate, interval=500, negative_cal=1, precision_adj=1)
+    arduino = serial.Arduino(port, baudrate, interval=200, negative_cal=1, precision_adj=1)
     app = App(arduino)
-    app.start()
 
-    # while True: 
-    #     print(arduino.readline())
+    app.start()
